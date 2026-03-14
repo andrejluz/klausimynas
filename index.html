@@ -83,6 +83,9 @@
             <div class="score-box" style="color: var(--b-color)">B: <span id="score-b">0</span></div>
         </div>
         <p id="status-text">Skaičiuojami naujausi taškai...</p>
+        
+        <button class="btn" style="background: #fab1a0; color: #2d3436;" onclick="resetEverything()">🔄 Žaisti iš naujo / Keisti komandą</button>
+        
         <hr>
         <button class="btn" style="background: #636e72; color: white;" onclick="showAdminQR()">Admin: Generuoti QR</button>
         <div id="qr-list" class="hidden"></div>
@@ -91,10 +94,10 @@
 
 <script>
     // ==========================================================
-    // ČIA ĮRAŠYK SAVO DUOMENIS IŠ GOOGLE FORMS IR SHEETS
+    // SUTVARKYTI DUOMENYS PAGAL TAVO NUOTRAUKAS
     // ==========================================================
-    const FORM_ID = "https://docs.google.com/spreadsheets/d/11P_xTUoZNonrIRSbMPIpOBSa5bRQLltISEwOzNLQNBQ/edit?resourcekey=&gid=1380485757#gid=1380485757"; // Pvz: 1FAIpQLScy...
-    const ENTRY_ID = "1ZfJkhUgG8GO7Kcx1PxoIRUpBEEn-whdCg1acu77S2os";    // Pvz: entry.8372615
+    const FORM_ID = "1ZFJkhUgG8GO7Kcx1PxolRUpBEEn-whdCg1acu77S2os"; 
+    const ENTRY_ID = "entry.1380485757"; // Patikrink, ar šis skaičius teisingas tavo formoje!
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR-UKnZUhIfpAhlnsqYQZTA7JOtf2pzv8JXKJirfXH4LJfOrtIJsDm0JS1kseu9AkadzYAFACLn9FVw/pub?output=csv";
     // ==========================================================
 
@@ -108,12 +111,18 @@
         location.reload();
     }
 
+    function resetEverything() {
+        if(confirm("Ar nori pradėti iš naujo ir keisti komandą?")) {
+            localStorage.clear();
+            window.location.href = window.location.pathname;
+        }
+    }
+
     async function init() {
-        if (!myTeam) return; // Rodyti pasirinkimą, jei nėra komandos
+        if (!myTeam) return;
 
         document.getElementById('setup').classList.add('hidden');
         
-        // Jei yra klausimo ID ir jis dar neatsakytas
         if (qId && !answered.includes(qId)) {
             document.getElementById('game').classList.remove('hidden');
             const indicator = document.getElementById('team-indicator');
@@ -150,46 +159,38 @@
 
     function submitAnswer(choice, correct) {
         if (choice === correct) {
-            // Slaptai užpildome Google formą
             const formFullUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse?${ENTRY_ID}=${myTeam}&submit=Submit`;
             fetch(formFullUrl, { mode: 'no-cors' });
-            alert("TEISINGAI! Taškas tavo komandai.");
+            alert("TEISINGAI!");
         } else {
-            alert("NETEISINGAI. Sėkmės kitą kartą!");
+            alert("NETEISINGAI.");
         }
         
         answered.push(qId);
         localStorage.setItem('answered', JSON.stringify(answered));
-        window.location.href = window.location.pathname; // Grįžti į rezultatus
+        window.location.href = window.location.pathname;
     }
 
     async function showResults() {
         document.getElementById('results').classList.remove('hidden');
-        if (!CSV_URL || CSV_URL === "TAVO_CSV_NUORODA_CIA") {
-            document.getElementById('status-text').innerText = "Pirma sukonfigūruokite CSV nuorodą!";
-            return;
-        }
-
         try {
-            // Pridedame laiko žymę, kad naršyklė nekrautų senų duomenų (cache)
             const response = await fetch(CSV_URL + "?t=" + new Date().getTime());
             const csvText = await response.text();
             
-            // Suskaičiuojame kiekvieną raidę
             const countA = (csvText.split(',A').length - 1) + (csvText.split('\nA').length - 1);
             const countB = (csvText.split(',B').length - 1) + (csvText.split('\nB').length - 1);
 
             document.getElementById('score-a').innerText = countA;
             document.getElementById('score-b').innerText = countB;
-            document.getElementById('status-text').innerText = "Nuskaityk kitą QR kodą!";
+            document.getElementById('status-text').innerText = "Skenuok kitą QR kodą!";
         } catch (e) {
-            document.getElementById('status-text').innerText = "Nepavyko atnaujinti rezultatų...";
+            document.getElementById('status-text').innerText = "Kraunami taškai...";
         }
     }
 
     function showAdminQR() {
         const list = document.getElementById('qr-list');
-        list.innerHTML = '<h3>Atspausdink šiuos QR:</h3>';
+        list.innerHTML = '<h3>QR Kodai moksleiviams:</h3>';
         list.classList.toggle('hidden');
         const baseUrl = window.location.href.split('?')[0];
         
@@ -200,11 +201,8 @@
         }
     }
 
-    // Paleidžiame žaidimą
     init();
-    
-    // Automatiškai atnaujiname rezultatus kas 10 sekundžių
-    if (myTeam) setInterval(showResults, 10000);
+    if (myTeam) setInterval(showResults, 5000);
 </script>
 
 </body>
