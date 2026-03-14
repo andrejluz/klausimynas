@@ -3,51 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Komandų Mūšis</title>
+    <title>Komandų Iššūkis</title>
     <style>
-        :root { --a: #ff7675; --b: #74b9ff; --bg: #f5f6fa; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); text-align: center; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
-        .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
-        .team-a { background: var(--a); color: white; }
-        .team-b { background: var(--b); color: white; }
-        .opt { background: #eee; color: #333; }
-        .opt:hover { background: #ddd; }
+        :root { 
+            --a-color: #ff7675; 
+            --b-color: #74b9ff; 
+            --bg: #f5f6fa; 
+            --dark: #2d3436;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            color: var(--dark); 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px; 
+            margin: 0;
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 450px; 
+            text-align: center; 
+        }
         .hidden { display: none; }
-        .score-row { display: flex; justify-content: space-around; margin: 20px 0; font-size: 24px; font-weight: bold; }
+        h1 { color: #6c5ce7; margin-bottom: 10px; }
+        .btn { 
+            display: block; 
+            width: 100%; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: bold; 
+            transition: 0.3s; 
+        }
+        .team-a { background: var(--a-color); color: white; }
+        .team-b { background: var(--b-color); color: white; }
+        .opt { background: #eee; color: var(--dark); border: 2px solid transparent; }
+        .opt:hover { border-color: #6c5ce7; background: #e8e8e8; }
+        .score-container { 
+            display: flex; 
+            justify-content: space-around; 
+            background: #f1f2f6; 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin: 20px 0;
+        }
+        .score-box { font-size: 28px; font-weight: bold; }
+        #qr-list div { margin: 20px 0; padding: 10px; border-top: 1px dashed #ccc; }
+        #qr-list img { width: 150px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div id="setup">
-        <h2>Pasirink savo pusę</h2>
+        <h1>🚀 Pasirink pusę</h1>
+        <p>Sveiki atvykę į iššūkį! Kurioje komandoje būsi?</p>
         <button class="btn team-a" onclick="setTeam('A')">KOMANDA A</button>
         <button class="btn team-b" onclick="setTeam('B')">KOMANDA B</button>
     </div>
 
     <div id="game" class="hidden">
-        <div id="team-tag" style="padding: 5px; border-radius: 5px; margin-bottom: 10px; color: white;"></div>
-        <h3 id="q-text">Kraunama...</h3>
+        <div id="team-indicator" style="font-weight: bold; margin-bottom: 15px; padding: 5px; border-radius: 5px; color: white;"></div>
+        <h2 id="q-text">Kraunama...</h2>
         <div id="options"></div>
     </div>
 
     <div id="results" class="hidden">
-        <h2>Bendra turnyrinė lentelė</h2>
-        <div class="score-row">
-            <div style="color: var(--a)">A: <span id="score-a">...</span></div>
-            <div style="color: var(--b)">B: <span id="score-b">...</span></div>
+        <h1>Turnyrinė lentelė</h1>
+        <div class="score-container">
+            <div class="score-box" style="color: var(--a-color)">A: <span id="score-a">0</span></div>
+            <div class="score-box" style="color: var(--b-color)">B: <span id="score-b">0</span></div>
         </div>
-        <p id="status-msg">Nuskaityk kitą QR kodą!</p>
-        <button class="btn" style="background:#636e72; color:white;" onclick="showAdminQR()">Admin: Rodyti QR</button>
+        <p id="status-text">Skaičiuojami naujausi taškai...</p>
+        <hr>
+        <button class="btn" style="background: #636e72; color: white;" onclick="showAdminQR()">Admin: Generuoti QR</button>
         <div id="qr-list" class="hidden"></div>
     </div>
 </div>
 
 <script>
-    // UNIKALUS RAKTAS - pakeisk šitą žodį į bet kokį atsitiktinį, pvz "zaidimas_2024_05"
-    const GAME_ID = "vno_moksleiviu_isbandymas_001"; 
-    
+    // ==========================================================
+    // ČIA ĮRAŠYK SAVO DUOMENIS IŠ GOOGLE FORMS IR SHEETS
+    // ==========================================================
+    const FORM_ID = "https://docs.google.com/spreadsheets/d/11P_xTUoZNonrIRSbMPIpOBSa5bRQLltISEwOzNLQNBQ/edit?resourcekey=&gid=1380485757#gid=1380485757"; // Pvz: 1FAIpQLScy...
+    const ENTRY_ID = "1ZfJkhUgG8GO7Kcx1PxoIRUpBEEn-whdCg1acu77S2os";    // Pvz: entry.8372615
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR-UKnZUhIfpAhlnsqYQZTA7JOtf2pzv8JXKJirfXH4LJfOrtIJsDm0JS1kseu9AkadzYAFACLn9FVw/pub?output=csv";
+    // ==========================================================
+
     let myTeam = localStorage.getItem('myTeam');
     let answered = JSON.parse(localStorage.getItem('answered') || "[]");
     const urlParams = new URLSearchParams(window.location.search);
@@ -59,15 +109,16 @@
     }
 
     async function init() {
-        if (!myTeam) return; // Rodyti komandos rinkimą
+        if (!myTeam) return; // Rodyti pasirinkimą, jei nėra komandos
 
         document.getElementById('setup').classList.add('hidden');
         
-        // Jei esame puslapyje su klausimu
+        // Jei yra klausimo ID ir jis dar neatsakytas
         if (qId && !answered.includes(qId)) {
             document.getElementById('game').classList.remove('hidden');
-            document.getElementById('team-tag').innerText = "Tavo komanda: " + myTeam;
-            document.getElementById('team-tag').style.background = myTeam === 'A' ? 'var(--a)' : 'var(--b)';
+            const indicator = document.getElementById('team-indicator');
+            indicator.innerText = "Tavo komanda: " + myTeam;
+            indicator.style.background = myTeam === 'A' ? 'var(--a-color)' : 'var(--b-color)';
             loadQuestion();
         } else {
             showResults();
@@ -75,91 +126,86 @@
     }
 
     async function loadQuestion() {
-        const res = await fetch('questions.json');
-        const data = await res.json();
-        const q = data.find(i => i.id === qId);
-
-        if (q) {
-            document.getElementById('q-text').innerText = q.q;
-            q.a.forEach((opt, i) => {
-                const b = document.createElement('button');
-                b.innerText = opt;
-                b.className = 'btn opt';
-                b.onclick = () => submit(i, q.c);
-                document.getElementById('options').appendChild(b);
-            });
-        }
-    }
-
-async function submit(choice, correct) {
-    if (choice === correct) {
         try {
-            // Naudojame hit (pridėti tašką)
-            const response = await fetch(`https://api.countapi.xyz/hit/${GAME_ID}/team${myTeam}`);
-            if (response.ok) {
-                alert("Teisingai! Taškas tavo komandai pridėtas.");
-            } else {
-                alert("Teisingai, bet internetas nesureagavo. Bandyk dar kartą!");
-                return; // Neleidžiam judėti toliau, kol neužfiksavo
-            }
-        } catch (error) {
-            alert("Klaida jungiantis prie taškų bazės. Patikrink internetą!");
-            return;
-        }
-    } else {
-        alert("Neteisingai...");
-    }
-    
-    answered.push(qId);
-    localStorage.setItem('answered', JSON.stringify(answered));
-    window.location.href = window.location.pathname; 
-}
+            const res = await fetch('questions.json');
+            const questions = await res.json();
+            const q = questions.find(item => item.id === qId);
 
-    
-    // async function submit(choice, correct) {
-    //     if (choice === correct) {
-    //         // SIUNČIAME TAŠKĄ Į INTERNETĄ
-    //         await fetch(`https://api.countapi.xyz/hit/${mokyklos_zaidymas}/team${myTeam}`);
-    //         alert("Teisingai! Taškas tavo komandai.");
-    //     } else {
-    //         alert("Neteisingai...");
-    //     }
-    //     answered.push(qId);
-    //     localStorage.setItem('answered', JSON.stringify(answered));
-    //     window.location.href = window.location.pathname; // Eiti į rezultatus
-    // }
+            if (q) {
+                document.getElementById('q-text').innerText = q.q;
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.a.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.innerText = opt;
+                    btn.className = 'btn opt';
+                    btn.onclick = () => submitAnswer(i, q.c);
+                    optionsDiv.appendChild(btn);
+                });
+            }
+        } catch (e) {
+            document.getElementById('q-text').innerText = "Klaida kraunant klausimą.";
+        }
+    }
+
+    function submitAnswer(choice, correct) {
+        if (choice === correct) {
+            // Slaptai užpildome Google formą
+            const formFullUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse?${ENTRY_ID}=${myTeam}&submit=Submit`;
+            fetch(formFullUrl, { mode: 'no-cors' });
+            alert("TEISINGAI! Taškas tavo komandai.");
+        } else {
+            alert("NETEISINGAI. Sėkmės kitą kartą!");
+        }
+        
+        answered.push(qId);
+        localStorage.setItem('answered', JSON.stringify(answered));
+        window.location.href = window.location.pathname; // Grįžti į rezultatus
+    }
 
     async function showResults() {
         document.getElementById('results').classList.remove('hidden');
-        
-        // Gauname rezultatus iš interneto
-        try {
-            const resA = await fetch(`https://api.countapi.xyz/get/${GAME_ID}/teamA`);
-            const dataA = await resA.json();
-            document.getElementById('score-a').innerText = dataA.value || 0;
+        if (!CSV_URL || CSV_URL === "TAVO_CSV_NUORODA_CIA") {
+            document.getElementById('status-text').innerText = "Pirma sukonfigūruokite CSV nuorodą!";
+            return;
+        }
 
-            const resB = await fetch(`https://api.countapi.xyz/get/${GAME_ID}/teamB`);
-            const dataB = await resB.json();
-            document.getElementById('score-b').innerText = dataB.value || 0;
-        } catch(e) {
-            document.getElementById('score-a').innerText = "0";
-            document.getElementById('score-b').innerText = "0";
+        try {
+            // Pridedame laiko žymę, kad naršyklė nekrautų senų duomenų (cache)
+            const response = await fetch(CSV_URL + "?t=" + new Date().getTime());
+            const csvText = await response.text();
+            
+            // Suskaičiuojame kiekvieną raidę
+            const countA = (csvText.split(',A').length - 1) + (csvText.split('\nA').length - 1);
+            const countB = (csvText.split(',B').length - 1) + (csvText.split('\nB').length - 1);
+
+            document.getElementById('score-a').innerText = countA;
+            document.getElementById('score-b').innerText = countB;
+            document.getElementById('status-text').innerText = "Nuskaityk kitą QR kodą!";
+        } catch (e) {
+            document.getElementById('status-text').innerText = "Nepavyko atnaujinti rezultatų...";
         }
     }
 
     function showAdminQR() {
         const list = document.getElementById('qr-list');
-        list.innerHTML = '';
+        list.innerHTML = '<h3>Atspausdink šiuos QR:</h3>';
         list.classList.toggle('hidden');
         const baseUrl = window.location.href.split('?')[0];
+        
         for(let i=1; i<=10; i++) {
             const qUrl = `${baseUrl}?q=${i}`;
-            const qr = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qUrl)}`;
-            list.innerHTML += `<div style="margin:10px">Q${i}<br><img src="${qr}"></div>`;
+            const qr = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qUrl)}`;
+            list.innerHTML += `<div>Klausimas ${i}<br><img src="${qr}"></div>`;
         }
     }
 
+    // Paleidžiame žaidimą
     init();
+    
+    // Automatiškai atnaujiname rezultatus kas 10 sekundžių
+    if (myTeam) setInterval(showResults, 10000);
 </script>
+
 </body>
 </html>
