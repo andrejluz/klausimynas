@@ -3,116 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Iššūkis</title>
+    <title>Komandų Mūšis</title>
     <style>
-        :root { --p: #6c5ce7; --bg: #f9f9fb; --txt: #2d3436; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--txt); display: flex; justify-content: center; padding: 20px; }
-        #card { background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        :root { --a: #ff7675; --b: #74b9ff; --bg: #f5f6fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); text-align: center; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
+        .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        .team-a { background: var(--a); color: white; }
+        .team-b { background: var(--b); color: white; }
+        .opt { background: #eee; color: #333; }
+        .opt:hover { background: #ddd; }
         .hidden { display: none; }
-        .btn { background: var(--p); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; margin: 8px 0; cursor: pointer; font-size: 1rem; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
-        .opt { background: white; border: 2px solid var(--p); color: var(--txt); }
-        #qr-box img { width: 180px; margin: 20px 0; border: 5px solid #eee; border-radius: 10px; }
-        .score-board { margin-top: 20px; padding: 10px; background: #eee; border-radius: 10px; font-weight: bold; }
+        .score-row { display: flex; justify-content: space-around; margin: 20px 0; font-size: 24px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="card">
-    <div id="s-start">
-        <h1>🚀 Quiz Iššūkis</h1>
-        <div id="qr-box"></div>
-        <p>Skenuok kodą draugo telefone arba spausk pradėti!</p>
-        <button class="btn" onclick="start()">PRADĖTI ŽAIDIMĄ</button>
-        <div id="high-score" class="score-board">Geriausias rezultatas: 0</div>
+<div class="card">
+    <div id="setup">
+        <h2>Pasirink savo pusę</h2>
+        <button class="btn team-a" onclick="setTeam('A')">KOMANDA A</button>
+        <button class="btn team-b" onclick="setTeam('B')">KOMANDA B</button>
     </div>
 
-    <div id="s-quiz" class="hidden">
-        <div id="progress" style="color: var(--p); margin-bottom: 10px;"></div>
-        <h2 id="q-text">Kraunama...</h2>
+    <div id="game" class="hidden">
+        <div id="team-tag" style="padding: 5px; border-radius: 5px; margin-bottom: 10px; color: white;"></div>
+        <h3 id="q-text">Kraunama...</h3>
         <div id="options"></div>
     </div>
 
-    <div id="s-result" class="hidden">
-        <h1>Baigta! 🎉</h1>
-        <h2 id="final-score">0/20</h2>
-        <div id="rating" style="font-size: 1.5rem; margin-bottom: 20px;"></div>
-        <button class="btn" onclick="location.reload()">Žaisti vėl</button>
+    <div id="results" class="hidden">
+        <h2>Bendra turnyrinė lentelė</h2>
+        <div class="score-row">
+            <div style="color: var(--a)">A: <span id="score-a">...</span></div>
+            <div style="color: var(--b)">B: <span id="score-b">...</span></div>
+        </div>
+        <p id="status-msg">Nuskaityk kitą QR kodą!</p>
+        <button class="btn" style="background:#636e72; color:white;" onclick="showAdminQR()">Admin: Rodyti QR</button>
+        <div id="qr-list" class="hidden"></div>
     </div>
 </div>
 
 <script>
-    let questions = [];
-    let current = 0;
-    let score = 0;
+    // UNIKALUS RAKTAS - pakeisk šitą žodį į bet kokį atsitiktinį, pvz "zaidimas_2024_05"
+    const GAME_ID = "vno_moksleiviu_isbandymas_001"; 
+    
+    let myTeam = localStorage.getItem('myTeam');
+    let answered = JSON.parse(localStorage.getItem('answered') || "[]");
+    const urlParams = new URLSearchParams(window.location.search);
+    const qId = parseInt(urlParams.get('q'));
 
-    // 1. Užkraunam JSON duomenis
-    async function loadData() {
-        try {
-            const res = await fetch('questions.json');
-            questions = await res.json();
-            genQR();
-            showHS();
-        } catch (e) { console.error("Klaida užkraunant JSON"); }
+    function setTeam(t) {
+        localStorage.setItem('myTeam', t);
+        location.reload();
     }
 
-    // 2. Sugeneruojam QR kodą šiam puslapiui
-    function genQR() {
-        const url = window.location.href;
-        document.getElementById('qr-box').innerHTML = 
-            `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}">`;
-    }
+    async function init() {
+        if (!myTeam) return; // Rodyti komandos rinkimą
 
-    function start() {
-        document.getElementById('s-start').classList.add('hidden');
-        document.getElementById('s-quiz').classList.remove('hidden');
-        showQ();
-    }
-
-    function showQ() {
-        const q = questions[current];
-        document.getElementById('progress').innerText = `Klausimas ${current + 1} iš ${questions.length}`;
-        document.getElementById('q-text').innerText = q.q;
-        const box = document.getElementById('options');
-        box.innerHTML = '';
-        q.a.forEach((opt, i) => {
-            const b = document.createElement('button');
-            b.innerText = opt;
-            b.className = 'btn opt';
-            b.onclick = () => check(i);
-            box.appendChild(b);
-        });
-    }
-
-    function check(idx) {
-        if(idx === questions[current].c) score++;
-        current++;
-        if(current < questions.length) showQ(); else finish();
-    }
-
-    function finish() {
-        document.getElementById('s-quiz').classList.add('hidden');
-        document.getElementById('s-result').classList.remove('hidden');
-        document.getElementById('final-score').innerText = `${score} / ${questions.length}`;
+        document.getElementById('setup').classList.add('hidden');
         
-        // Reitingas
-        let r = score > 15 ? "🔥 PRO" : score > 10 ? "😎 Vidutiniokas" : "😅 Bandyk dar kartą";
-        document.getElementById('rating').innerText = r;
-
-        // Išsaugojam reitingą telefone
-        const hs = localStorage.getItem('quiz_hs') || 0;
-        if(score > hs) {
-            localStorage.setItem('quiz_hs', score);
+        // Jei esame puslapyje su klausimu
+        if (qId && !answered.includes(qId)) {
+            document.getElementById('game').classList.remove('hidden');
+            document.getElementById('team-tag').innerText = "Tavo komanda: " + myTeam;
+            document.getElementById('team-tag').style.background = myTeam === 'A' ? 'var(--a)' : 'var(--b)';
+            loadQuestion();
+        } else {
+            showResults();
         }
     }
 
-    function showHS() {
-        const hs = localStorage.getItem('quiz_hs') || 0;
-        document.getElementById('high-score').innerText = `Tavo rekordas: ${hs} taškų`;
+    async function loadQuestion() {
+        const res = await fetch('questions.json');
+        const data = await res.json();
+        const q = data.find(i => i.id === qId);
+
+        if (q) {
+            document.getElementById('q-text').innerText = q.q;
+            q.a.forEach((opt, i) => {
+                const b = document.createElement('button');
+                b.innerText = opt;
+                b.className = 'btn opt';
+                b.onclick = () => submit(i, q.c);
+                document.getElementById('options').appendChild(b);
+            });
+        }
     }
 
-    loadData();
-</script>
+    async function submit(choice, correct) {
+        if (choice === correct) {
+            // SIUNČIAME TAŠKĄ Į INTERNETĄ
+            await fetch(`https://api.countapi.xyz/hit/${GAME_ID}/team${myTeam}`);
+            alert("Teisingai! Taškas tavo komandai.");
+        } else {
+            alert("Neteisingai...");
+        }
+        answered.push(qId);
+        localStorage.setItem('answered', JSON.stringify(answered));
+        window.location.href = window.location.pathname; // Eiti į rezultatus
+    }
 
+    async function showResults() {
+        document.getElementById('results').classList.remove('hidden');
+        
+        // Gauname rezultatus iš interneto
+        try {
+            const resA = await fetch(`https://api.countapi.xyz/get/${GAME_ID}/teamA`);
+            const dataA = await resA.json();
+            document.getElementById('score-a').innerText = dataA.value || 0;
+
+            const resB = await fetch(`https://api.countapi.xyz/get/${GAME_ID}/teamB`);
+            const dataB = await resB.json();
+            document.getElementById('score-b').innerText = dataB.value || 0;
+        } catch(e) {
+            document.getElementById('score-a').innerText = "0";
+            document.getElementById('score-b').innerText = "0";
+        }
+    }
+
+    function showAdminQR() {
+        const list = document.getElementById('qr-list');
+        list.innerHTML = '';
+        list.classList.toggle('hidden');
+        const baseUrl = window.location.href.split('?')[0];
+        for(let i=1; i<=10; i++) {
+            const qUrl = `${baseUrl}?q=${i}`;
+            const qr = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qUrl)}`;
+            list.innerHTML += `<div style="margin:10px">Q${i}<br><img src="${qr}"></div>`;
+        }
+    }
+
+    init();
+</script>
 </body>
 </html>
