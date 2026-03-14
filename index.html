@@ -91,18 +91,43 @@
         }
     }
 
-    async function submit(choice, correct) {
-        if (choice === correct) {
-            // SIUNČIAME TAŠKĄ Į INTERNETĄ
-            await fetch(`https://api.countapi.xyz/hit/${mokyklos_zaidymas}/team${myTeam}`);
-            alert("Teisingai! Taškas tavo komandai.");
-        } else {
-            alert("Neteisingai...");
+async function submit(choice, correct) {
+    if (choice === correct) {
+        try {
+            // Naudojame hit (pridėti tašką)
+            const response = await fetch(`https://api.countapi.xyz/hit/${GAME_ID}/team${myTeam}`);
+            if (response.ok) {
+                alert("Teisingai! Taškas tavo komandai pridėtas.");
+            } else {
+                alert("Teisingai, bet internetas nesureagavo. Bandyk dar kartą!");
+                return; // Neleidžiam judėti toliau, kol neužfiksavo
+            }
+        } catch (error) {
+            alert("Klaida jungiantis prie taškų bazės. Patikrink internetą!");
+            return;
         }
-        answered.push(qId);
-        localStorage.setItem('answered', JSON.stringify(answered));
-        window.location.href = window.location.pathname; // Eiti į rezultatus
+    } else {
+        alert("Neteisingai...");
     }
+    
+    answered.push(qId);
+    localStorage.setItem('answered', JSON.stringify(answered));
+    window.location.href = window.location.pathname; 
+}
+
+    
+    // async function submit(choice, correct) {
+    //     if (choice === correct) {
+    //         // SIUNČIAME TAŠKĄ Į INTERNETĄ
+    //         await fetch(`https://api.countapi.xyz/hit/${mokyklos_zaidymas}/team${myTeam}`);
+    //         alert("Teisingai! Taškas tavo komandai.");
+    //     } else {
+    //         alert("Neteisingai...");
+    //     }
+    //     answered.push(qId);
+    //     localStorage.setItem('answered', JSON.stringify(answered));
+    //     window.location.href = window.location.pathname; // Eiti į rezultatus
+    // }
 
     async function showResults() {
         document.getElementById('results').classList.remove('hidden');
