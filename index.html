@@ -94,7 +94,7 @@
     async function submit(choice, correct) {
         if (choice === correct) {
             // SIUNČIAME TAŠKĄ Į INTERNETĄ
-            await fetch(`https://api.countapi.xyz/hit/${GAME_ID}/team${myTeam}`);
+            await fetch(`https://api.countapi.xyz/hit/${mokyklos_zaidymas}/team${myTeam}`);
             alert("Teisingai! Taškas tavo komandai.");
         } else {
             alert("Neteisingai...");
