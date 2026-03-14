@@ -56,6 +56,8 @@
             margin: 20px 0;
         }
         .score-box { font-size: 28px; font-weight: bold; }
+        .main-qr { margin-top: 20px; padding: 15px; background: #fff; border: 2px solid #6c5ce7; border-radius: 15px; }
+        .main-qr img { width: 200px; height: 200px; }
         #qr-list div { margin: 20px 0; padding: 10px; border-top: 1px dashed #ccc; }
         #qr-list img { width: 150px; }
     </style>
@@ -65,7 +67,7 @@
 <div class="card">
     <div id="setup">
         <h1>🚀 Pasirink pusę</h1>
-        <p>Sveiki atvykę į iššūkį! Kurioje komandoje būsi?</p>
+        <p>Sveiki atvykę! Kurioje komandoje būsi?</p>
         <button class="btn team-a" onclick="setTeam('A')">KOMANDA A</button>
         <button class="btn team-b" onclick="setTeam('B')">KOMANDA B</button>
     </div>
@@ -78,26 +80,34 @@
 
     <div id="results" class="hidden">
         <h1>Turnyrinė lentelė</h1>
+        
+        <div class="main-qr">
+            <p style="margin-top:0; font-weight:bold;">Skenuok ir prisijunk!</p>
+            <div id="join-qr"></div>
+        </div>
+
         <div class="score-container">
             <div class="score-box" style="color: var(--a-color)">A: <span id="score-a">0</span></div>
             <div class="score-box" style="color: var(--b-color)">B: <span id="score-b">0</span></div>
         </div>
+        
         <p id="status-text">Skaičiuojami naujausi taškai...</p>
         
-        <button class="btn" style="background: #fab1a0; color: #2d3436;" onclick="resetEverything()">🔄 Žaisti iš naujo / Keisti komandą</button>
+        <button class="btn" style="background: #fab1a0; color: #2d3436;" onclick="resetEverything()">🔄 Pradėti iš naujo</button>
         
         <hr>
-        <button class="btn" style="background: #636e72; color: white;" onclick="showAdminQR()">Admin: Generuoti QR</button>
+        <button class="btn" style="background: #636e72; color: white;" onclick="showAdminQR()">Admin: Klausimų QR</button>
         <div id="qr-list" class="hidden"></div>
     </div>
 </div>
 
 <script>
     // ==========================================================
-    // SUTVARKYTI DUOMENYS PAGAL TAVO NUOTRAUKAS
+    // DUOMENYS
     // ==========================================================
     const FORM_ID = "1ZFJkhUgG8GO7Kcx1PxolRUpBEEn-whdCg1acu77S2os"; 
-    const ENTRY_ID = "1ZfJkhUgG8GO7Kcx1PxoIRUpBEEn-whdCg1acu77S2os"; // Patikrink, ar šis skaičius teisingas tavo formoje!
+    // SVARBU: ENTRY_ID turi būti skaičius iš "Inspect" (pvz: entry.1234567)
+    const ENTRY_ID = "entry.252772890"; 
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR-UKnZUhIfpAhlnsqYQZTA7JOtf2pzv8JXKJirfXH4LJfOrtIJsDm0JS1kseu9AkadzYAFACLn9FVw/pub?output=csv";
     // ==========================================================
 
@@ -112,14 +122,26 @@
     }
 
     function resetEverything() {
-        if(confirm("Ar nori pradėti iš naujo ir keisti komandą?")) {
+        if(confirm("DĖMESIO: Tai ištrins tavo pasirinktą komandą tavo telefone. Ar tęsti?")) {
             localStorage.clear();
             window.location.href = window.location.pathname;
         }
     }
 
     async function init() {
-        if (!myTeam) return;
+        // Sugeneruojame prisijungimo QR kodą rezultatų lange
+        const baseUrl = window.location.href.split('?')[0];
+        const joinQrDiv = document.getElementById('join-qr');
+        if (joinQrDiv) {
+            const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(baseUrl)}`;
+            joinQrDiv.innerHTML = `<img src="${qrImg}" alt="Prisijungimo QR">`;
+        }
+
+        if (!myTeam) {
+            document.getElementById('setup').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            return;
+        }
 
         document.getElementById('setup').classList.add('hidden');
         
@@ -161,7 +183,7 @@
         if (choice === correct) {
             const formFullUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse?${ENTRY_ID}=${myTeam}&submit=Submit`;
             fetch(formFullUrl, { mode: 'no-cors' });
-            alert("TEISINGAI!");
+            alert("TEISINGAI! Taškas tavo komandai.");
         } else {
             alert("NETEISINGAI.");
         }
@@ -182,7 +204,7 @@
 
             document.getElementById('score-a').innerText = countA;
             document.getElementById('score-b').innerText = countB;
-            document.getElementById('status-text').innerText = "Skenuok kitą QR kodą!";
+            document.getElementById('status-text').innerText = "Skenuok klausimų QR kodus!";
         } catch (e) {
             document.getElementById('status-text').innerText = "Kraunami taškai...";
         }
@@ -190,7 +212,7 @@
 
     function showAdminQR() {
         const list = document.getElementById('qr-list');
-        list.innerHTML = '<h3>QR Kodai moksleiviams:</h3>';
+        list.innerHTML = '<h3>QR Kodai užduotims:</h3>';
         list.classList.toggle('hidden');
         const baseUrl = window.location.href.split('?')[0];
         
