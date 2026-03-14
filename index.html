@@ -10,6 +10,7 @@
             --b-color: #74b9ff; 
             --bg: #f5f6fa; 
             --dark: #2d3436;
+            --primary: #6c5ce7;
         }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -30,7 +31,7 @@
             text-align: center; 
         }
         .hidden { display: none; }
-        h1 { color: #6c5ce7; margin-bottom: 10px; }
+        h1 { color: var(--primary); margin-bottom: 10px; }
         .btn { 
             display: block; 
             width: 100%; 
@@ -46,7 +47,31 @@
         .team-a { background: var(--a-color); color: white; }
         .team-b { background: var(--b-color); color: white; }
         .opt { background: #eee; color: var(--dark); border: 2px solid transparent; }
-        .opt:hover { border-color: #6c5ce7; background: #e8e8e8; }
+        .opt:hover { border-color: var(--primary); background: #e8e8e8; }
+        
+        /* QR Kodo rėmelis */
+        .qr-main-container {
+            background: #fff;
+            padding: 15px;
+            border: 3px solid var(--primary);
+            border-radius: 20px;
+            margin: 20px 0;
+            display: inline-block;
+        }
+        .qr-main-container img {
+            width: 200px;
+            height: 200px;
+            display: block;
+            margin: 0 auto;
+        }
+        .qr-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
         .score-container { 
             display: flex; 
             justify-content: space-around; 
@@ -56,8 +81,6 @@
             margin: 20px 0;
         }
         .score-box { font-size: 28px; font-weight: bold; }
-        .main-qr { margin: 15px 0; padding: 15px; background: #fff; border: 2px solid #6c5ce7; border-radius: 15px; display: inline-block; }
-        .main-qr img { width: 180px; height: 180px; }
         #qr-list div { margin: 20px 0; padding: 10px; border-top: 1px dashed #ccc; }
         #qr-list img { width: 150px; }
     </style>
@@ -65,15 +88,15 @@
 <body>
 
 <div class="card">
-    <div id="setup" class="hidden">
-        <h1>🚀 Prisijunk prie žaidimo</h1>
+    <div id="setup">
+        <h1>🚀 Komandų Iššūkis</h1>
         
-        <div class="main-qr">
-            <p style="margin-top:0; font-weight:bold; font-size: 14px;">Skenuok ir rinkis komandą!</p>
-            <div class="qr-placeholder"></div>
+        <div class="qr-main-container">
+            <div class="qr-label">Skenuok telefoniniu, kad žaistum</div>
+            <div id="setup-qr"></div>
         </div>
 
-        <p>Kurioje komandoje būsi?</p>
+        <p>Pasirink savo pusę:</p>
         <button class="btn team-a" onclick="setTeam('A')">KOMANDA A</button>
         <button class="btn team-b" onclick="setTeam('B')">KOMANDA B</button>
     </div>
@@ -85,28 +108,23 @@
     </div>
 
     <div id="results" class="hidden">
-        <h1>Turnyrinė lentelė</h1>
-        
-        <div class="main-qr">
-            <p style="margin-top:0; font-weight:bold; font-size: 14px;">Naujiems žaidėjams:</p>
-            <div class="qr-placeholder"></div>
-        </div>
-
+        <h1>Rezultatai</h1>
         <div class="score-container">
             <div class="score-box" style="color: var(--a-color)">A: <span id="score-a">0</span></div>
             <div class="score-box" style="color: var(--b-color)">B: <span id="score-b">0</span></div>
         </div>
+        <p id="status-text">Skenuok užduotis!</p>
         
-        <p id="status-text">Skaičiuojami naujausi taškai...</p>
-        <button class="btn" style="background: #fab1a0; color: #2d3436;" onclick="resetEverything()">🔄 Pradėti iš naujo</button>
-        
+        <button class="btn" style="background: #fab1a0; color: #2d3436;" onclick="resetEverything()">🔄 Keisti komandą</button>
         <hr>
-        <button class="btn" style="background: #636e72; color: white;" onclick="showAdminQR()">Admin: Klausimų QR</button>
+        <button class="btn" style="background: #636e72; color: white;" onclick="showAdminQR()">Admin: Klausimų QR kodai</button>
         <div id="qr-list" class="hidden"></div>
     </div>
 </div>
 
 <script>
+    // ==========================================================
+    // TAVO DUOMENYS
     // ==========================================================
     const FORM_ID = "1ZFJkhUgG8GO7Kcx1PxolRUpBEEn-whdCg1acu77S2os"; 
     const ENTRY_ID = "entry.252772890"; 
@@ -124,34 +142,33 @@
     }
 
     function resetEverything() {
-        if(confirm("DĖMESIO: Tai ištrins tavo pasirinktą komandą telefone. Tęsti?")) {
+        if(confirm("Ar tikrai nori pradėti iš naujo?")) {
             localStorage.clear();
             window.location.href = window.location.pathname;
         }
     }
 
     async function init() {
-        // Sugeneruojame QR kodus visose vietose, kur yra klasė .qr-placeholder
+        // Generuojame pagrindinį QR kodą (kad mokiniai galėtų prisijungti)
         const baseUrl = window.location.href.split('?')[0];
-        const qrPlaceholders = document.querySelectorAll('.qr-placeholder');
-        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(baseUrl)}`;
+        const setupQrDiv = document.getElementById('setup-qr');
+        // Sukuriamas QR kodas, kuris nukreipia į šį puslapį
+        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(baseUrl)}`;
+        setupQrDiv.innerHTML = `<img src="${qrImgUrl}" alt="Join Game QR">`;
+
+        if (!myTeam) return; // Jei komanda nepasirinkta, liekame setup lange
+
+        document.getElementById('setup').classList.add('hidden');
         
-        qrPlaceholders.forEach(el => {
-            el.innerHTML = `<img src="${qrImgUrl}" alt="QR">`;
-        });
-
-        if (!myTeam) {
-            document.getElementById('setup').classList.remove('hidden');
-            return;
-        }
-
         if (qId && !answered.includes(qId)) {
+            // Rodyti klausimą
             document.getElementById('game').classList.remove('hidden');
             const indicator = document.getElementById('team-indicator');
             indicator.innerText = "Tavo komanda: " + myTeam;
             indicator.style.background = myTeam === 'A' ? 'var(--a-color)' : 'var(--b-color)';
             loadQuestion();
         } else {
+            // Rodyti rezultatus
             showResults();
         }
     }
@@ -175,7 +192,7 @@
                 });
             }
         } catch (e) {
-            document.getElementById('q-text').innerText = "Klaida kraunant klausimą.";
+            document.getElementById('q-text').innerText = "Klaida: Nepavyko užkrauti klausimų (patikrink questions.json failą).";
         }
     }
 
@@ -197,21 +214,24 @@
         try {
             const response = await fetch(CSV_URL + "?t=" + new Date().getTime());
             const csvText = await response.text();
+            
+            // Suskaičiuojame kiek kartų CSV faile pasikartoja "A" ir "B"
             const countA = (csvText.split(',A').length - 1) + (csvText.split('\nA').length - 1);
             const countB = (csvText.split(',B').length - 1) + (csvText.split('\nB').length - 1);
+
             document.getElementById('score-a').innerText = countA;
             document.getElementById('score-b').innerText = countB;
-            document.getElementById('status-text').innerText = "Skenuok klausimų QR kodus!";
         } catch (e) {
-            document.getElementById('status-text').innerText = "Kraunami taškai...";
+            console.log("Nepavyko gauti taškų...");
         }
     }
 
     function showAdminQR() {
         const list = document.getElementById('qr-list');
-        list.innerHTML = '<h3>QR Kodai užduotims:</h3>';
+        list.innerHTML = '<h3>Užduočių QR (iškabink klasėje):</h3>';
         list.classList.toggle('hidden');
         const baseUrl = window.location.href.split('?')[0];
+        
         for(let i=1; i<=10; i++) {
             const qUrl = `${baseUrl}?q=${i}`;
             const qr = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qUrl)}`;
@@ -220,6 +240,7 @@
     }
 
     init();
+    // Automatiškai atnaujinti rezultatus kas 5 sekundes
     if (myTeam) setInterval(showResults, 5000);
 </script>
 
