@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iššūkis 15-16 mečiams</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg: #f0f2f5;
+            --text: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #game-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .hidden { display: none; }
+
+        h1 { color: var(--primary); margin-bottom: 10px; }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .btn:hover { background: var(--secondary); }
+
+        .option-btn {
+            background: #fff;
+            border: 2px solid var(--primary);
+            color: var(--text);
+        }
+
+        .option-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        #progress { margin-bottom: 20px; font-weight: bold; color: var(--secondary); }
+        
+        .rating { font-size: 24px; font-weight: bold; margin-top: 20px; color: #e17055; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="start-screen">
+        <h1>🚀 Quiz Challenge</h1>
+        <p>Ar esi pasiruošęs 20-ies klausimų iššūkiui?</p>
+        <button class="btn" onclick="startGame()">Pradėti!</button>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <div id="progress">Klausimas 1 iš 20</div>
+        <h2 id="question-text">Klausimas čia?</h2>
+        <div id="options-container">
+            </div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h1>Baigta! 🎉</h1>
+        <p id="score-text">Tavo rezultatas: 0/20</p>
+        <div id="rating-text" class="rating"></div>
+        <button class="btn" onclick="location.reload()">Bandyti dar kartą</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "Kokia yra didžiausia socialinio tinklo „TikTok“ kilmės šalis?", a: ["JAV", "Pietų Korėja", "Kinija", "Japonija"], correct: 2 },
+        { q: "Kiek yra $2^5$?", a: ["16", "32", "64", "10"], correct: 1 },
+        { q: "Kas parašė „Hamletą“?", a: ["V. Šekspyras", "O. Vaildas", "Dantė", "J. Biliūnas"], correct: 0 },
+        { q: "Koks cheminis elementas žymimas „Au“?", a: ["Sidabras", "Varis", "Auksas", "Geležis"], correct: 2 },
+        { q: "Kuriame mieste vyks artimiausios Olimpinės žaidynės?", a: ["Londonas", "Paryžius", "Tokijas", "Berlynas"], correct: 1 },
+        { q: "Kiek minučių yra 2,5 valandose?", a: ["120", "150", "180", "200"], correct: 1 },
+        { q: "Kas yra „Tesla“ įkūrėjas?", a: ["Jeff Bezos", "Bill Gates", "Elon Musk", "Mark Zuckerberg"], correct: 2 },
+        { q: "Kokia valiuta naudojama Lenkijoje?", a: ["Euras", "Litas", "Zlotas", "Frankas"], correct: 2 },
+        { q: "Kokia upė teka per Vilnių?", a: ["Nemunas", "Neris", "Nevėžis", "Merkys"], correct: 1 },
+        { q: "Kiek spalvų turi vaivorykštė?", a: ["5", "6", "7", "8"], correct: 2 },
+        { q: "Kuri planeta vadinama „Raudonąja planeta“?", a: ["Venera", "Marsas", "Jupiteris", "Saturnas"], correct: 1 },
+        { q: "Kokia yra Lietuvos sostinė?", a: ["Kaunas", "Klaipėda", "Vilnius", "Šiauliai"], correct: 2 },
+        { q: "Kas laimėjo paskutinį Eurovizijos konkursą?", a: ["Šveicarija", "Lietuva", "Ukraina", "Švedija"], correct: 0 },
+        { q: "Koks procesas augaluose gamina deguonį?", a: ["Kvėpavimas", "Fotosintezė", "Garavimas", "Oksidacija"], correct: 1 },
+        { q: "Koks yra populiariausias sportas pasaulyje?", a: ["Krepšinis", "Tenisas", "Futbolas", "Boksas"], correct: 2 },
+        { q: "Kiek dienų turi keliamieji metai?", a: ["364", "365", "366", "367"], correct: 2 },
+        { q: "Kas atrado Ameriką?", a: ["Magelanas", "Kolumbas", "Vasko da Gama", "Kukas"], correct: 1 },
+        { q: "Kuriame žemyne yra Sacharos dykuma?", a: ["Azijoje", "Afrikoje", "Australijoje", "Pietų Amerikoje"], correct: 1 },
+        { q: "Kokia programavimo kalba dažniausiai naudojama puslapių interaktyvumui?", a: ["Python", "C++", "JavaScript", "PHP"], correct: 2 },
+        { q: "Kiek yra 100 / 4 + 5?", a: ["20", "25", "30", "35"], correct: 2 }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('quiz-screen').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = questions[currentQuestion];
+        document.getElementById('progress').innerText = `Klausimas ${currentQuestion + 1} iš 20`;
+        document.getElementById('question-text').innerText = q.q;
+        const optionsDiv = document.getElementById('options-container');
+        optionsDiv.innerHTML = '';
+
+        q.a.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.classList.add('btn', 'option-btn');
+            btn.onclick = () => checkAnswer(index);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected) {
+        if(selected === questions[currentQuestion].correct) {
+            score++;
+        }
+        
+        currentQuestion++;
+        if(currentQuestion < questions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('score-text').innerText = `Tavo rezultatas: ${score} iš 20`;
+        
+        let rating = "";
+        if(score === 20) rating = "🌟 Genijus! (10/10)";
+        else if(score >= 15) rating = "🔥 Labai gerai! (8-9/10)";
+        else if(score >= 10) rating = "👍 Vidutiniškai (5-7/10)";
+        else rating = "😅 Reikia pasikartoti... (0-4/10)";
+        
+        document.getElementById('rating-text').innerText = rating;
+    }
+</script>
+
+</body>
+</html>
